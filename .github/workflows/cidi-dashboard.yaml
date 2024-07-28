@@ -50,10 +50,15 @@ jobs:
           for repo in repos:
               workflows = repo.get_workflows()
               for workflow in workflows:
-                  runs = workflow.get_runs(conclusion='completed')
+                  runs = workflow.get_runs()
+                  completed_runs = [run for run in runs if run.conclusion is not None]
+                  if completed_runs:
+                      latest_run = completed_runs[0]
+                      status = latest_run.status.upper()
+                      content = f"{repo.name} - {workflow.name}: {status}"
                   if runs.totalCount > 0:
                       latest_run = runs[0]
-                      status = latest_run.conclusion.upper()
+                      status = latest_run.status.upper()
                       dashboard += f"- {repo.name} - {workflow.name}: {status}\n"
 
           # Update the README.md file
