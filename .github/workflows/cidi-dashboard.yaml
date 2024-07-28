@@ -63,16 +63,16 @@ jobs:
 
           # Update the README.md file
           repo = g.get_repo("$ORGANIZATION_NAME/.github")
-          contents = repo.get_contents("README.md")
+          contents = repo.get_contents("profile/README.md")
           repo.update_file(contents.path, "Update dashboard", dashboard, contents.sha)
 
           print("Dashboard updated successfully!")
           EOF
 
-      - name: Commit changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add README.md
-          git commit -m "Update dashboard" || echo "No changes to commit"
-          git push
+      # - name: Commit changes
+      #   run: |
+      #     git config --local user.email "action@github.com"
+      #     git config --local user.name "GitHub Action"
+      #     git add README.md
+      #     git commit -m "Update dashboard" || echo "No changes to commit"
+      #     git push
