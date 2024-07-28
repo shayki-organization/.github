@@ -35,6 +35,7 @@ jobs:
           python - <<EOF
           import os
           from github import Github
+          from datetime import datetime
 
           # Initialize GitHub client
           g = Github(os.environ['GITHUB_TOKEN'])
@@ -47,19 +48,32 @@ jobs:
 
           # Prepare the dashboard content
           dashboard = "# CI/CD Dashboard\n\n"
+          dashboard += "| Repository | Workflow | Status | Last Run |\n"
+          dashboard += "| ---------- | -------- | ------ | -------- |\n"
+          
           for repo in repos:
               workflows = repo.get_workflows()
               for workflow in workflows:
-                  runs = workflow.get_runs()
-                  completed_runs = [run for run in runs if run.conclusion is not None]
-                  if completed_runs:
-                      latest_run = completed_runs[0]
-                      status = latest_run.status.upper()
-                      content = f"{repo.name} - {workflow.name}: {status}"
+                  runs = workflow.get_runs(status='completed')
                   if runs.totalCount > 0:
                       latest_run = runs[0]
-                      status = latest_run.status.upper()
-                      dashboard += f"- {repo.name} - {workflow.name}: {status}\n"
+                      status = latest_run.conclusion.lower()
+                      
+                      # Create status badge
+                      if status == 'success':
+                          badge = f"![Success](https://img.shields.io/badge/Success-brightgreen)"
+                      elif status == 'failure':
+                          badge = f"![Failure](https://img.shields.io/badge/Failure-red)"
+                      else:
+                          badge = f"![{status.capitalize()}](https://img.shields.io/badge/{status.capitalize()}-yellow)"
+                      
+                      # Format last run date
+                      last_run = latest_run.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                      
+                      dashboard += f"| [{repo.name}]({repo.html_url}) | {workflow.name} | {badge} | {last_run} |\n"
+          
+          # Add update timestamp
+          dashboard += f"\n\n*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*"
 
           # Update the README.md file
           repo = g.get_repo("$ORGANIZATION_NAME/.github")
@@ -69,10 +83,3 @@ jobs:
           print("Dashboard updated successfully!")
           EOF
 
-      # - name: Commit changes
-      #   run: |
-      #     git config --local user.email "action@github.com"
-      #     git config --local user.name "GitHub Action"
-      #     git add README.md
-      #     git commit -m "Update dashboard" || echo "No changes to commit"
-      #     git push
