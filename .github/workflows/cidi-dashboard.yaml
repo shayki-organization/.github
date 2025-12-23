@@ -1,36 +1,17 @@
-name: Update Dashboard
-
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '*/50 * * * *'  # Runs every 50 minutes
-
-
 jobs:
   update-dashboard:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: read
-      checks: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
-
+        uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
-
+          python-version: 3.x
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install PyGithub
-
       - name: Update dashboard
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ORGANIZATION_NAME: shayki-organization
         run: |
           python - <<EOF
           import os
@@ -39,7 +20,7 @@ jobs:
 
           # Initialize GitHub client
           g = Github(os.environ['GITHUB_TOKEN'])
-          
+
           # Get the organization
           org = g.get_organization("$ORGANIZATION_NAME")
 
@@ -50,7 +31,7 @@ jobs:
           dashboard = "# CI/CD Dashboard\n\n"
           dashboard += "| Repository | Workflow | Status | Last Run |\n"
           dashboard += "| ---------- | -------- | ------ | -------- |\n"
-          
+
           for repo in repos:
               workflows = repo.get_workflows()
               for workflow in workflows:
@@ -71,7 +52,7 @@ jobs:
                       last_run = latest_run.created_at.strftime("%Y-%m-%d %H:%M:%S")
                       
                       dashboard += f"| [{repo.name}]({repo.html_url}) | {workflow.name} | {badge} | {last_run} |\n"
-          
+
           # Add update timestamp
           dashboard += f"\n\n*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*"
 
@@ -82,4 +63,3 @@ jobs:
 
           print("Dashboard updated successfully!")
           EOF
-
